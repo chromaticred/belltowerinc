@@ -418,685 +418,700 @@
     }
 
 
-        function addFieldLabelSelect(event) {
-            const currentAddButton = event.target;
-            if (currentAddButton.nodeName === 'BUTTON' && currentAddButton.parentNode) {
-                const currentContainer = currentAddButton.parentNode;
-                const newContainer = document.createElement('div');
-                newContainer.className = 'input-group mb-3';
+    function addFieldLabelSelect(event) {
+        const currentAddButton = event.target;
+        if (currentAddButton.nodeName === 'BUTTON' && currentAddButton.parentNode) {
+            const currentContainer = currentAddButton.parentNode;
+            const newContainer = document.createElement('div');
+            newContainer.className = 'input-group mb-3';
 
-                const newFieldLabelSelect = document.createElement('select');
-                newFieldLabelSelect.className = 'form-select field-label-select';
-                newFieldLabelSelect.innerHTML = currentContainer.querySelector('select').innerHTML;
-                newFieldLabelSelect.addEventListener('change', fieldLabelSelectChangeHandler);
+            const newFieldLabelSelect = document.createElement('select');
+            newFieldLabelSelect.className = 'form-select field-label-select';
+            newFieldLabelSelect.innerHTML = currentContainer.querySelector('select').innerHTML;
+            newFieldLabelSelect.addEventListener('change', fieldLabelSelectChangeHandler);
 
-                const removeButton = document.createElement('button');
-                removeButton.className = 'btn btn-outline-danger';
-                removeButton.textContent = '-';
-                removeButton.addEventListener('click', removeFieldLabelSelect); // Attach the event listener
-
-
-                const addButton = document.createElement('button');
-                addButton.className = 'btn btn-outline-primary';
-                addButton.textContent = '+';
-                addButton.onclick = addFieldLabelSelect;
-
-                newContainer.appendChild(removeButton);
-                newContainer.appendChild(newFieldLabelSelect);
-                newContainer.appendChild(addButton);
-
-                const fieldLabelGroup = document.createElement('div');
-                fieldLabelGroup.className = 'field-label-group mb-2';
-
-                // Append input group to field label group
-                fieldLabelGroup.appendChild(newContainer);
-
-                // Append response options container to field label group
-                const responseOptionsContainer = document.createElement('div');
-                responseOptionsContainer.className = 'response-options-container dropzone';
-                fieldLabelGroup.appendChild(responseOptionsContainer);
-
-                // Insert the new field label group after the current one
-                currentContainer.closest('.field-label-group').after(fieldLabelGroup);
+            const removeButton = document.createElement('button');
+            removeButton.className = 'btn btn-outline-danger';
+            removeButton.textContent = '-';
+            removeButton.addEventListener('click', removeFieldLabelSelect); // Attach the event listener
 
 
-                attachFieldLabelSelectListeners();
+            const addButton = document.createElement('button');
+            addButton.className = 'btn btn-outline-primary';
+            addButton.textContent = '+';
+            addButton.onclick = addFieldLabelSelect;
+
+            newContainer.appendChild(removeButton);
+            newContainer.appendChild(newFieldLabelSelect);
+            newContainer.appendChild(addButton);
+
+            const fieldLabelGroup = document.createElement('div');
+            fieldLabelGroup.className = 'field-label-group mb-2';
+
+            // Append input group to field label group
+            fieldLabelGroup.appendChild(newContainer);
+
+            // Append response options container to field label group
+            const responseOptionsContainer = document.createElement('div');
+            responseOptionsContainer.className = 'response-options-container dropzone';
+            fieldLabelGroup.appendChild(responseOptionsContainer);
+
+            // Insert the new field label group after the current one
+            currentContainer.closest('.field-label-group').after(fieldLabelGroup);
+
+
+            attachFieldLabelSelectListeners();
+        }
+
+        // Update the options for all fieldLabelSelect elements
+        const selectedLabels = updateSelectedFieldLabels();
+        updateFieldLabelOptions(selectedLabels);
+    }
+
+    function removeFieldLabelSelect(event) {
+        // Find the closest parent .field-label-group of the clicked 'Remove' button
+        const fieldLabelGroup = event.target.closest('.field-label-group');
+        if (fieldLabelGroup) {
+            fieldLabelGroup.remove(); // Remove the entire group, including Field Label and Response Options
+        } else {
+            console.error('Field label group not found for the remove button.');
+        }
+
+        // Update the selected field labels if necessary
+        const selectedLabels = updateSelectedFieldLabels();
+        updateFieldLabelOptions(selectedLabels);
+    }
+
+
+    function populateFieldLabelSelect(selectElement, uniqueFieldLabels, fieldLabelCodeMap) {
+        selectElement.innerHTML = '<option selected>Select FIELD_LABEL</option>';
+        uniqueFieldLabels.forEach(label => {
+            const option = document.createElement('option');
+            option.value = label;
+            option.textContent = label;
+            // Set FIELD_CODE as a data attribute
+            if (fieldLabelCodeMap.has(label)) {
+                option.setAttribute('data-field-code', fieldLabelCodeMap.get(label));
             }
+            selectElement.appendChild(option);
+        });
+    }
 
-            // Update the options for all fieldLabelSelect elements
-            const selectedLabels = updateSelectedFieldLabels();
-            updateFieldLabelOptions(selectedLabels);
-        }
-
-        function removeFieldLabelSelect(event) {
-            // Find the closest parent .field-label-group of the clicked 'Remove' button
-            const fieldLabelGroup = event.target.closest('.field-label-group');
-            if (fieldLabelGroup) {
-                fieldLabelGroup.remove(); // Remove the entire group, including Field Label and Response Options
-            } else {
-                console.error('Field label group not found for the remove button.');
+    function updateSelectedFieldLabels() {
+        const selectedLabels = new Set();
+        document.querySelectorAll('.field-label-select').forEach(select => {
+            if (select.value !== 'Select FIELD_LABEL') {
+                selectedLabels.add(select.value);
             }
+        });
+        return selectedLabels;
+    }
 
-            // Update the selected field labels if necessary
-            const selectedLabels = updateSelectedFieldLabels();
-            updateFieldLabelOptions(selectedLabels);
-        }
+    function updateFieldLabelOptions(selectedLabels) {
+        document.querySelectorAll('.field-label-select').forEach(select => {
+            const currentValue = select.value;
+            const options = select.querySelectorAll('option');
 
-
-        function populateFieldLabelSelect(selectElement, uniqueFieldLabels, fieldLabelCodeMap) {
-            selectElement.innerHTML = '<option selected>Select FIELD_LABEL</option>';
-            uniqueFieldLabels.forEach(label => {
-                const option = document.createElement('option');
-                option.value = label;
-                option.textContent = label;
-                // Set FIELD_CODE as a data attribute
-                if (fieldLabelCodeMap.has(label)) {
-                    option.setAttribute('data-field-code', fieldLabelCodeMap.get(label));
-                }
-                selectElement.appendChild(option);
-            });
-        }
-
-        function updateSelectedFieldLabels() {
-            const selectedLabels = new Set();
-            document.querySelectorAll('.field-label-select').forEach(select => {
-                if (select.value !== 'Select FIELD_LABEL') {
-                    selectedLabels.add(select.value);
+            options.forEach(option => {
+                if (option.value !== 'Select FIELD_LABEL' && option.value !== currentValue) {
+                    option.style.display = selectedLabels.has(option.value) ? 'none' : ''; // Hide if selected, show otherwise
                 }
             });
-            return selectedLabels;
+        });
+    }
+
+    function attachFieldLabelSelectListeners() {
+        document.querySelectorAll('.field-label-select').forEach(select => {
+            select.removeEventListener('change', fieldLabelSelectChangeHandler); // Remove existing listener to avoid duplicates
+            select.addEventListener('change', fieldLabelSelectChangeHandler);
+        });
+    }
+
+    function fieldLabelSelectChangeHandler() {
+        console.log("Field label select changed. Current fieldLabelSelect:", this);
+        const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
+        const selectedFormTab = document.getElementById('formTabSelect').value.trim();
+        const selectedLabel = this.value;
+        const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${selectedLabel}`;
+        const responseOptions = responseOptionsMap[compositeKey];
+
+        console.log("Selected label:", selectedLabel);
+        console.log("Response options for the selected label:", responseOptions);
+
+        // Find the closest parent .field-label-group for the selected Field Label
+        const parentContainer = this.closest('.field-label-group');
+        if (!parentContainer) {
+            console.error('Parent .field-label-group not found.');
+            return;
         }
 
-        function updateFieldLabelOptions(selectedLabels) {
-            document.querySelectorAll('.field-label-select').forEach(select => {
-                const currentValue = select.value;
-                const options = select.querySelectorAll('option');
+        // Find the .response-options-container within the parentContainer
+        const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
+        if (!responseOptionsContainer) {
+            console.error('Response options container not found within parent container.');
+            return;
+        }
 
-                options.forEach(option => {
-                    if (option.value !== 'Select FIELD_LABEL' && option.value !== currentValue) {
-                        option.style.display = selectedLabels.has(option.value) ? 'none' : ''; // Hide if selected, show otherwise
-                    }
+        if (responseOptions && responseOptions.length > 0) {
+            populateResponseOptions(this, selectedLabel, responseOptionsMap[compositeKey]);
+        } else {
+            // Clear the response options container if no response options are available for the selected label
+            responseOptionsContainer.innerHTML = '';
+            const statisticsSelector = createStatisticsSelect(true)
+            responseOptionsContainer.appendChild(statisticsSelector);
+            console.log("No response options for:", selectedLabel);
+        }
+    }
+
+    function addResponseOptionSelector(container, option) {
+        const selectorContainer = document.createElement('div');
+        selectorContainer.className = 'response-option-selector';
+
+        const select = document.createElement('select');
+        select.className = 'form-select';
+
+        const optionElement = document.createElement('option');
+        optionElement.value = option.key;
+        optionElement.textContent = option.value;
+        select.appendChild(optionElement);
+
+        const addButton = document.createElement('button');
+        addButton.textContent = '+';
+        addButton.onclick = () => addResponseOptionSelector(container, option);
+
+        const removeButton = document.createElement('button');
+        removeButton.textContent = '-';
+        removeButton.onclick = () => selectorContainer.remove();
+
+        selectorContainer.appendChild(select);
+        selectorContainer.appendChild(addButton);
+        selectorContainer.appendChild(removeButton);
+
+        container.appendChild(selectorContainer);
+    }
+
+    function populateResponseOptions(fieldLabelSelect, fieldLabel) {
+        const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
+        const selectedFormTab = document.getElementById('formTabSelect').value.trim();
+        const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${fieldLabel}`;
+
+        // Ensure fieldLabelSelect is a DOM element
+
+        if (!(fieldLabelSelect instanceof HTMLElement)) {
+            console.error('fieldLabelSelect is not a valid DOM element.');
+            return;
+        }
+
+        console.log('Field Label Select Element:', fieldLabelSelect);
+
+        // Find the closest parent .field-label-group for the selected Field Label
+        const parentContainer = fieldLabelSelect.closest('.field-label-group');
+        console.log('Parent Container:', parentContainer);
+
+        if (!parentContainer) {
+            console.error('Parent .field-label-group not found.');
+            return;
+        }
+
+        // Find the .response-options-container within the parentContainer
+        const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
+        console.log('Response Options Container:', responseOptionsContainer);
+        if (!responseOptionsContainer) {
+            console.error('Response options container not found within parent container.', parentContainer);
+            return;
+        }
+
+        // Clear any existing content in the response options container
+        responseOptionsContainer.innerHTML = '';
+
+        // Use the specific response options for the field label from responseOptionsMap
+        const specificResponseOptions = responseOptionsMap[compositeKey] || [];
+
+        // Sort and filter the response options
+        if (specificResponseOptions.length === 0) {
+            // If there are no response options, add a statistics select with the 'Input' option
+            const statisticsSelect = createStatisticsSelect(true); // true indicates that the 'Input' option should be included
+            responseOptionsContainer.appendChild(statisticsSelect);
+        } else {
+            specificResponseOptions
+                .filter(option => /^\d+ = [^,]+(,|$)/.test(option.trim())) // Filter out options that don't match "# = text"
+                .map(option => option.trim().split(' = ')) // Split the options into [number, text]
+                .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Sort based on the number
+                .forEach(([number, text]) => {
+                    const responseOptionGroup = createResponseOptionGroup(number + ' = ' + text, fieldLabel);
+                    responseOptionsContainer.appendChild(responseOptionGroup);
                 });
-            });
         }
-
-        function attachFieldLabelSelectListeners() {
-            document.querySelectorAll('.field-label-select').forEach(select => {
-                select.removeEventListener('change', fieldLabelSelectChangeHandler); // Remove existing listener to avoid duplicates
-                select.addEventListener('change', fieldLabelSelectChangeHandler);
-            });
-        }
-
-        function fieldLabelSelectChangeHandler() {
-            console.log("Field label select changed. Current fieldLabelSelect:", this);
-            const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
-            const selectedFormTab = document.getElementById('formTabSelect').value.trim();
-            const selectedLabel = this.value;
-            const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${selectedLabel}`;
-            const responseOptions = responseOptionsMap[compositeKey];
-
-            console.log("Selected label:", selectedLabel);
-            console.log("Response options for the selected label:", responseOptions);
-
-            // Find the closest parent .field-label-group for the selected Field Label
-            const parentContainer = this.closest('.field-label-group');
-            if (!parentContainer) {
-                console.error('Parent .field-label-group not found.');
-                return;
-            }
-
-            // Find the .response-options-container within the parentContainer
-            const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
-            if (!responseOptionsContainer) {
-                console.error('Response options container not found within parent container.');
-                return;
-            }
-
-            if (responseOptions && responseOptions.length > 0) {
-                populateResponseOptions(this, selectedLabel, responseOptionsMap[compositeKey]);
-            } else {
-                // Clear the response options container if no response options are available for the selected label
-                responseOptionsContainer.innerHTML = '';
-                const statisticsSelector = createStatisticsSelect(true)
-                responseOptionsContainer.appendChild(statisticsSelector);
-                console.log("No response options for:", selectedLabel);
-            }
-        }
+        console.log('Final Contents of Response Options Container:', responseOptionsContainer.innerHTML);
 
 
-        {#function parseResponseOptions(responseOptionsStr) {#}
-        {#    return responseOptionsStr.split(',')#}
-        {#        .map(option => option.trim())#}
-        {#        .filter(option => option.match(/^\d+\s*=\s*.+$/)) // Use regex to filter out options that don't match "# = text"#}
-        {#        .map(option => {#}
-        {#            const [key, value] = option.split('=').map(part => part.trim());#}
-        {#            return {key, value};#}
-        {#        });#}
-        {#}#}
+        // Function to create a response option group
+        function createResponseOptionGroup(option) {
+            const responseOptionGroup = document.createElement('div');
+            responseOptionGroup.className = 'response-option-group d-flex flex-row align-items-center mb-2 drag-drop';
 
+            const removeButton = document.createElement('button');
+            removeButton.className = 'btn btn-danger me-2';
+            removeButton.textContent = '-';
+            removeButton.onclick = () => {
+                const optionValue = responseOptionSelect.value; // Value of the option being removed
+                responseOptionGroup.remove(); // Remove the option group from the DOM
 
-            function addResponseOptionSelector(container, option) {
-                const selectorContainer = document.createElement('div');
-                selectorContainer.className = 'response-option-selector';
+                if (responseOptionsMap[compositeKey]) {
+                    // Add the removed option back to the list for its specific field label
+                    responseOptionsMap[compositeKey].removed = responseOptionsMap[compositeKey].removed || [];
+                    responseOptionsMap[compositeKey].removed.push(optionValue);
+                }
+                // Update the select elements to reflect the change
+                updateResponseOptionSelectorsForLabel(fieldLabel);
+            };
 
-                const select = document.createElement('select');
-                select.className = 'form-select';
+            const responseOptionSelect = document.createElement('select');
+            responseOptionSelect.className = 'form-select response-option-select';
+            responseOptionSelect.innerHTML = `<option value="${option}">${option}</option>`;
 
+            const dragHandle = document.createElement('span');
+            dragHandle.className = 'drag-handle btn btn-outline-secondary fa-solid fa-grip-lines';
+            dragHandle.style.cursor = 'grab';
+
+            const statisticsSelect = document.createElement('select');
+            statisticsSelect.className = 'statistics-select form-select ms-2';
+            const statsOptions = ['Percentage', 'Mean_SD', 'Count'];
+            statsOptions.forEach(stat => {
                 const optionElement = document.createElement('option');
-                optionElement.value = option.key;
-                optionElement.textContent = option.value;
-                select.appendChild(optionElement);
-
-                const addButton = document.createElement('button');
-                addButton.textContent = '+';
-                addButton.onclick = () => addResponseOptionSelector(container, option);
-
-                const removeButton = document.createElement('button');
-                removeButton.textContent = '-';
-                removeButton.onclick = () => selectorContainer.remove();
-
-                selectorContainer.appendChild(select);
-                selectorContainer.appendChild(addButton);
-                selectorContainer.appendChild(removeButton);
-
-                container.appendChild(selectorContainer);
-            }
-
-            function populateResponseOptions(fieldLabelSelect, fieldLabel) {
-                const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
-                const selectedFormTab = document.getElementById('formTabSelect').value.trim();
-                const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${fieldLabel}`;
-
-                // Ensure fieldLabelSelect is a DOM element
-
-                if (!(fieldLabelSelect instanceof HTMLElement)) {
-                    console.error('fieldLabelSelect is not a valid DOM element.');
-                    return;
-                }
-
-                console.log('Field Label Select Element:', fieldLabelSelect);
-
-                // Find the closest parent .field-label-group for the selected Field Label
-                const parentContainer = fieldLabelSelect.closest('.field-label-group');
-                console.log('Parent Container:', parentContainer);
-
-                if (!parentContainer) {
-                    console.error('Parent .field-label-group not found.');
-                    return;
-                }
-
-                // Find the .response-options-container within the parentContainer
-                const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
-                console.log('Response Options Container:', responseOptionsContainer);
-                if (!responseOptionsContainer) {
-                    console.error('Response options container not found within parent container.', parentContainer);
-                    return;
-                }
-
-                // Clear any existing content in the response options container
-                responseOptionsContainer.innerHTML = '';
-
-                // Use the specific response options for the field label from responseOptionsMap
-                const specificResponseOptions = responseOptionsMap[compositeKey] || [];
-
-                // Sort and filter the response options
-                if (specificResponseOptions.length === 0) {
-                    // If there are no response options, add a statistics select with the 'Input' option
-                    const statisticsSelect = createStatisticsSelect(true); // true indicates that the 'Input' option should be included
-                    responseOptionsContainer.appendChild(statisticsSelect);
-                } else {
-                    specificResponseOptions
-                        .filter(option => /^\d+ = [^,]+(,|$)/.test(option.trim())) // Filter out options that don't match "# = text"
-                        .map(option => option.trim().split(' = ')) // Split the options into [number, text]
-                        .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Sort based on the number
-                        .forEach(([number, text]) => {
-                            const responseOptionGroup = createResponseOptionGroup(number + ' = ' + text, fieldLabel);
-                            responseOptionsContainer.appendChild(responseOptionGroup);
-                        });
-                }
-                console.log('Final Contents of Response Options Container:', responseOptionsContainer.innerHTML);
-
-
-                // Function to create a response option group
-                function createResponseOptionGroup(option) {
-                    const responseOptionGroup = document.createElement('div');
-                    responseOptionGroup.className = 'response-option-group d-flex flex-row align-items-center mb-2 drag-drop';
-
-                    const removeButton = document.createElement('button');
-                    removeButton.className = 'btn btn-danger me-2';
-                    removeButton.textContent = '-';
-                    removeButton.onclick = () => {
-                        const optionValue = responseOptionSelect.value; // Value of the option being removed
-                        responseOptionGroup.remove(); // Remove the option group from the DOM
-
-                        if (responseOptionsMap[compositeKey]) {
-                            // Add the removed option back to the list for its specific field label
-                            responseOptionsMap[compositeKey].removed = responseOptionsMap[compositeKey].removed || [];
-                            responseOptionsMap[compositeKey].removed.push(optionValue);
-                        }
-                        // Update the select elements to reflect the change
-                        updateResponseOptionSelectorsForLabel(fieldLabel);
-                    };
-
-                    const responseOptionSelect = document.createElement('select');
-                    responseOptionSelect.className = 'form-select response-option-select';
-                    responseOptionSelect.innerHTML = `<option value="${option}">${option}</option>`;
-
-                    const dragHandle = document.createElement('span');
-                    dragHandle.className = 'drag-handle btn btn-outline-secondary fa-solid fa-grip-lines';
-                    dragHandle.style.cursor = 'grab';
-
-                    const statisticsSelect = document.createElement('select');
-                    statisticsSelect.className = 'statistics-select form-select ms-2';
-                    const statsOptions = ['Percentage', 'Mean_SD', 'Count'];
-                    statsOptions.forEach(stat => {
-                        const optionElement = document.createElement('option');
-                        optionElement.value = stat.toLowerCase();
-                        optionElement.textContent = stat;
-                        statisticsSelect.appendChild(optionElement);
-                    });
-
-                    responseOptionGroup.appendChild(dragHandle);
-                    responseOptionGroup.appendChild(responseOptionSelect);
-                    responseOptionGroup.appendChild(statisticsSelect);
-                    responseOptionGroup.appendChild(removeButton);
-
-                    return responseOptionGroup;
-                }
-            }
-
-            function createStatisticsSelect(includeInput = false) {
-                const statisticsSelect = document.createElement('select');
-                statisticsSelect.className = 'statistics-select form-select ms-2';
-                const statsOptions = ['Percentage', 'Mean_SD', 'Count'];
-                if (includeInput) {
-                    statsOptions.push('Input'); // Include 'Input' if no response options
-                }
-                statsOptions.forEach(stat => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = stat.toLowerCase();
-                    optionElement.textContent = stat;
-                    statisticsSelect.appendChild(optionElement);
-                });
-
-                statisticsSelect.addEventListener('change', function () {
-                    const nextSibling = this.nextElementSibling;
-                    if (this.value === 'input') {
-                        // Add input box if it does not exist
-                        if (!nextSibling || nextSibling.nodeName !== 'INPUT') {
-                            const inputBox = document.createElement('input');
-                            inputBox.type = 'text';
-                            inputBox.className = 'input-select form-control ms-2';
-                            this.parentNode.insertBefore(inputBox, this.nextSibling);
-                        }
-                    } else {
-                        // Remove input box if it exists
-                        if (nextSibling && nextSibling.nodeName === 'INPUT') {
-                            nextSibling.remove();
-                        }
-                    }
-                });
-
-                return statisticsSelect;
-            }
-
-            function updateResponseOptionSelectorsForLabel(fieldLabel) {
-                // Find all select elements within the response options container for the specific field label
-                const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
-                const selectedFormTab = document.getElementById('formTabSelect').value.trim();
-                const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${fieldLabel}`;
-
-                const containers = document.querySelectorAll(`.response-options-container[data-field-label="${fieldLabel}"]`);
-
-                containers.forEach(container => {
-                    const selects = container.querySelectorAll('.response-option-select');
-
-                    selects.forEach(select => {
-                        const currentSelectedValue = select.value;
-                        const optionsToInclude = new Set(responseOptionsMap[compositeKey]);
-
-                        // Clear the select element
-                        select.innerHTML = '';
-
-                        // Add the currently selected option and any removed options to the select element
-                        optionsToInclude.forEach(optionValue => {
-                            const optionEl = document.createElement('option');
-                            optionEl.value = optionValue;
-                            optionEl.textContent = optionValue;
-                            // Set the current selected value as selected
-                            if (optionValue === currentSelectedValue) {
-                                optionEl.selected = true;
-                            }
-                            select.appendChild(optionEl);
-                        });
-                    });
-                });
-            }
-
-
-            function populateInitialResponseOptions() {
-                const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
-                const selectedFormTab = document.getElementById('formTabSelect').value.trim();
-                const initialFieldLabelSelect = document.getElementById('fieldLabelSelect');
-                const initialFieldLabel = initialFieldLabelSelect.value;
-                const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${initialFieldLabel}`;
-                const responseOptions = responseOptionsMap[compositeKey];
-
-                if (responseOptions) {
-                    const initialResponseOptionsContainer = document.getElementById('initial-field-label-group').querySelector('.response-options-container');
-                    if (initialResponseOptionsContainer) {
-                        initialResponseOptionsContainer.innerHTML = ''; // Clear existing options
-                        responseOptions.forEach(option => {
-                            const optionElement = document.createElement('div');
-                            optionElement.textContent = option.trim();
-                            initialResponseOptionsContainer.appendChild(optionElement);
-                        });
-                    } else {
-                        console.error('Initial response options container not found.');
-                    }
-                } else {
-                    console.error('No response options found for initial field label.');
-                }
-            }
-
-
-            function updateResponseOptionSelectors(fieldLabel) {
-                const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
-                const selectedFormTab = document.getElementById('formTabSelect').value.trim();
-                const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${fieldLabel}`;
-                // Find all selectors for the specific Field Label
-                const selectors = document.querySelectorAll(`.field-label-select[value="${fieldLabel}"] + .response-options-container .response-option-select`);
-
-                selectors.forEach(select => {
-                    const currentSelectedValue = select.value;
-                    select.innerHTML = ''; // Clear current options
-
-                    responseOptionsMap[compositeKey].forEach(optionValue => {
-                        const optionElement = document.createElement('option');
-                        optionElement.value = optionValue;
-                        optionElement.textContent = optionValue;
-                        if (optionValue === currentSelectedValue) {
-                            optionElement.selected = true;
-                        }
-                        select.appendChild(optionElement);
-                    });
-                });
-            }
-
-            document.getElementById('addHeaderToTableBtn').addEventListener('click', function () {
-                const headerValue = document.getElementById('headerInput').value;
-                const deviceValue = document.getElementById('deviceInput').value;
-
-                // Function to find first entirely blank row
-                function findFirstEmptyRow(hotInstance) {
-                    let rowCount = hotInstance.countRows();
-                    for (let i = 0; i < rowCount; i++) {
-                        let row = hotInstance.getDataAtRow(i);
-                        if (row.every(cell => !cell || cell === '')) {
-                            return i;
-                        }
-                    }
-                    return rowCount; // If no empty row, return index after the last row
-                }
-
-                let firstEmptyRowIndex = findFirstEmptyRow(hotTableViewer);
-
-                // Set the header in the first column
-                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, headerValue);
-                // Set the device in the third column
-                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, deviceValue);
+                optionElement.value = stat.toLowerCase();
+                optionElement.textContent = stat;
+                statisticsSelect.appendChild(optionElement);
             });
 
-            document.getElementById('addSubheaderToTableBtn').addEventListener('click', function () {
-                const subheaderValue = document.getElementById('subheaderInput').value;
-                const selectedStatistic = document.getElementById('subHeaderStatisticsSelect').value;
+            responseOptionGroup.appendChild(dragHandle);
+            responseOptionGroup.appendChild(responseOptionSelect);
+            responseOptionGroup.appendChild(statisticsSelect);
+            responseOptionGroup.appendChild(removeButton);
 
-                // Function to find first entirely blank row
-                function findFirstEmptyRow(hotInstance) {
-                    let rowCount = hotInstance.countRows();
-                    for (let i = 0; i < rowCount; i++) {
-                        let row = hotInstance.getDataAtRow(i);
-                        if (row.every(cell => !cell || cell === '')) {
-                            return i;
-                        }
-                    }
-                    return rowCount; // If no empty row, return index after the last row
+            return responseOptionGroup;
+        }
+    }
+
+    function createStatisticsSelect(includeInput = false) {
+        const statisticsSelect = document.createElement('select');
+        statisticsSelect.className = 'statistics-select form-select ms-2';
+        const statsOptions = ['Percentage', 'Mean_SD', 'Count'];
+        if (includeInput) {
+            statsOptions.push('Input'); // Include 'Input' if no response options
+        }
+        statsOptions.forEach(stat => {
+            const optionElement = document.createElement('option');
+            optionElement.value = stat.toLowerCase();
+            optionElement.textContent = stat;
+            statisticsSelect.appendChild(optionElement);
+        });
+
+        statisticsSelect.addEventListener('change', function () {
+            const nextSibling = this.nextElementSibling;
+            if (this.value === 'input') {
+                // Add input box if it does not exist
+                if (!nextSibling || nextSibling.nodeName !== 'INPUT') {
+                    const inputBox = document.createElement('input');
+                    inputBox.type = 'text';
+                    inputBox.className = 'input-select form-control ms-2';
+                    this.parentNode.insertBefore(inputBox, this.nextSibling);
                 }
+            } else {
+                // Remove input box if it exists
+                if (nextSibling && nextSibling.nodeName === 'INPUT') {
+                    nextSibling.remove();
+                }
+            }
+        });
 
-                let firstEmptyRowIndex = findFirstEmptyRow(hotTableViewer);
+        return statisticsSelect;
+    }
 
-                // Parse the selected statistic into the desired format
+    function updateResponseOptionSelectorsForLabel(fieldLabel) {
+        // Find all select elements within the response options container for the specific field label
+        const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
+        const selectedFormTab = document.getElementById('formTabSelect').value.trim();
+        const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${fieldLabel}`;
+
+        const containers = document.querySelectorAll(`.response-options-container[data-field-label="${fieldLabel}"]`);
+
+        containers.forEach(container => {
+            const selects = container.querySelectorAll('.response-option-select');
+
+            selects.forEach(select => {
+                const currentSelectedValue = select.value;
+                const optionsToInclude = new Set(responseOptionsMap[compositeKey]);
+
+                // Clear the select element
+                select.innerHTML = '';
+
+                // Add the currently selected option and any removed options to the select element
+                optionsToInclude.forEach(optionValue => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = optionValue;
+                    optionEl.textContent = optionValue;
+                    // Set the current selected value as selected
+                    if (optionValue === currentSelectedValue) {
+                        optionEl.selected = true;
+                    }
+                    select.appendChild(optionEl);
+                });
+            });
+        });
+    }
+
+
+    function populateInitialResponseOptions() {
+        const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
+        const selectedFormTab = document.getElementById('formTabSelect').value.trim();
+        const initialFieldLabelSelect = document.getElementById('fieldLabelSelect');
+        const initialFieldLabel = initialFieldLabelSelect.value;
+        const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${initialFieldLabel}`;
+        const responseOptions = responseOptionsMap[compositeKey];
+
+        if (responseOptions) {
+            const initialResponseOptionsContainer = document.getElementById('initial-field-label-group').querySelector('.response-options-container');
+            if (initialResponseOptionsContainer) {
+                initialResponseOptionsContainer.innerHTML = ''; // Clear existing options
+                responseOptions.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.textContent = option.trim();
+                    initialResponseOptionsContainer.appendChild(optionElement);
+                });
+            } else {
+                console.error('Initial response options container not found.');
+            }
+        } else {
+            console.error('No response options found for initial field label.');
+        }
+    }
+
+
+    function updateResponseOptionSelectors(fieldLabel) {
+        const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
+        const selectedFormTab = document.getElementById('formTabSelect').value.trim();
+        const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${fieldLabel}`;
+        // Find all selectors for the specific Field Label
+        const selectors = document.querySelectorAll(`.field-label-select[value="${fieldLabel}"] + .response-options-container .response-option-select`);
+
+        selectors.forEach(select => {
+            const currentSelectedValue = select.value;
+            select.innerHTML = ''; // Clear current options
+
+            responseOptionsMap[compositeKey].forEach(optionValue => {
+                const optionElement = document.createElement('option');
+                optionElement.value = optionValue;
+                optionElement.textContent = optionValue;
+                if (optionValue === currentSelectedValue) {
+                    optionElement.selected = true;
+                }
+                select.appendChild(optionElement);
+            });
+        });
+    }
+
+    document.getElementById('addHeaderToTableBtn').addEventListener('click', function () {
+        const headerValue = document.getElementById('headerInput').value;
+        const deviceValue = document.getElementById('deviceInput').value;
+
+        // Function to find first entirely blank row
+        function findFirstEmptyRow(hotInstance) {
+            let rowCount = hotInstance.countRows();
+            for (let i = 0; i < rowCount; i++) {
+                let row = hotInstance.getDataAtRow(i);
+                if (row.every(cell => !cell || cell === '')) {
+                    return i;
+                }
+            }
+            return rowCount; // If no empty row, return index after the last row
+        }
+
+        let firstEmptyRowIndex = findFirstEmptyRow(hotTableViewer);
+
+        // Set the header in the first column
+        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, headerValue);
+        // Set the device in the third column
+        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, deviceValue);
+    });
+
+    document.getElementById('addSubheaderToTableBtn').addEventListener('click', function () {
+        const subheaderValue = document.getElementById('subheaderInput').value;
+        const selectedStatistic = document.getElementById('subHeaderStatisticsSelect').value;
+
+        // Function to find first entirely blank row
+        function findFirstEmptyRow(hotInstance) {
+            let rowCount = hotInstance.countRows();
+            for (let i = 0; i < rowCount; i++) {
+                let row = hotInstance.getDataAtRow(i);
+                if (row.every(cell => !cell || cell === '')) {
+                    return i;
+                }
+            }
+            return rowCount; // If no empty row, return index after the last row
+        }
+
+        let firstEmptyRowIndex = findFirstEmptyRow(hotTableViewer);
+
+        // Parse the selected statistic into the desired format
+        let statisticText = '';
+        switch (selectedStatistic.toLowerCase()) {
+            case 'count':
+                statisticText = "XX"; // Placeholder - replace with actual count value
+                break;
+            case 'mean_sd':
+                statisticText = "XX.x ± X.x"; // Placeholder - replace with actual mean value
+                break;
+            case 'percentage':
+                statisticText = "XX.x% (m/n)"; // Placeholder - replace with actual percentage value
+                break;
+        }
+
+        // Set the subheader in the second column
+        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, subheaderValue);
+        // Set the statistic in the third column
+        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, statisticText);
+    });
+
+
+    document.getElementById('addToTableBtn').addEventListener('click', function () {
+        // Function to find the first entirely blank row
+        function findFirstEmptyRow(hotInstance) {
+            let rowCount = hotInstance.countRows();
+            for (let i = 0; i < rowCount; i++) {
+                let row = hotInstance.getDataAtRow(i);
+                if (row.every(cell => !cell || cell === '')) {
+                    return i;
+                }
+            }
+            return rowCount; // If no empty row, return index after the last row
+        }
+
+        let firstEmptyRowIndex = findFirstEmptyRow(hotTableViewer);
+        const fieldLabelSelects = document.querySelectorAll('.field-label-select');
+
+        fieldLabelSelects.forEach((select) => {
+            const fieldLabel = select.value;
+            const fieldCode = select.selectedOptions[0].getAttribute('data-field-code');
+            const parentContainer = select.closest('.field-label-group');
+            const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
+            const responseOptionGroups = responseOptionsContainer.querySelectorAll('.response-option-group');
+            const statisticsSelect = parentContainer.querySelector('.statistics-select');
+            let fieldLabelAdded = false; // Flag to add the field label only once
+
+            if (responseOptionGroups.length === 0 && statisticsSelect && statisticsSelect.value === 'input') {
+                // Handle the case where 'input' is selected and there are no response options
+                const inputBox = parentContainer.querySelector('.input-select');
+                let inputText = inputBox ? inputBox.value : '';
+                if (!fieldLabelAdded) {
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, fieldLabel);
+                    fieldLabelAdded = true;
+                }
+                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, inputText);
+                firstEmptyRowIndex++;
+            } else if (responseOptionGroups.length === 0 && statisticsSelect) {
+                let statistic = statisticsSelect ? statisticsSelect.value.toLowerCase() : '';
+                let statisticDisplayText = statisticsSelect.options[statisticsSelect.selectedIndex].text;
                 let statisticText = '';
-                switch (selectedStatistic.toLowerCase()) {
+
+                // Parse the statistic option
+                switch (statistic) {
                     case 'count':
-                        statisticText = "XX"; // Placeholder - replace with actual count value
+                        statisticText = "XX"; // Placeholder for actual count value
                         break;
                     case 'mean_sd':
-                        statisticText = "XX.x ± X.x"; // Placeholder - replace with actual mean value
+                        statisticText = "XX.x ± X.x"; // Placeholder for actual mean value
                         break;
                     case 'percentage':
-                        statisticText = "XX.x% (m/n)"; // Placeholder - replace with actual percentage value
+                        statisticText = "XX.x% (m/n)"; // Placeholder for actual percentage value
                         break;
-                }
-
-                // Set the subheader in the second column
-                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, subheaderValue);
-                // Set the statistic in the third column
-                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, statisticText);
-            });
-
-
-            document.getElementById('addToTableBtn').addEventListener('click', function () {
-                // Function to find the first entirely blank row
-                function findFirstEmptyRow(hotInstance) {
-                    let rowCount = hotInstance.countRows();
-                    for (let i = 0; i < rowCount; i++) {
-                        let row = hotInstance.getDataAtRow(i);
-                        if (row.every(cell => !cell || cell === '')) {
-                            return i;
-                        }
-                    }
-                    return rowCount; // If no empty row, return index after the last row
-                }
-
-                let firstEmptyRowIndex = findFirstEmptyRow(hotTableViewer);
-                const fieldLabelSelects = document.querySelectorAll('.field-label-select');
-
-                fieldLabelSelects.forEach((select) => {
-                    const fieldLabel = select.value;
-                    const fieldCode = select.selectedOptions[0].getAttribute('data-field-code');
-                    const parentContainer = select.closest('.field-label-group');
-                    const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
-                    const responseOptionGroups = responseOptionsContainer.querySelectorAll('.response-option-group');
-                    const statisticsSelect = parentContainer.querySelector('.statistics-select');
-                    let fieldLabelAdded = false; // Flag to add the field label only once
-
-                    if (responseOptionGroups.length === 0 && statisticsSelect && statisticsSelect.value === 'input') {
-                        // Handle the case where 'input' is selected and there are no response options
+                    case 'input':
                         const inputBox = parentContainer.querySelector('.input-select');
-                        let inputText = inputBox ? inputBox.value : '';
-                        if (!fieldLabelAdded) {
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, fieldLabel);
-                            fieldLabelAdded = true;
-                        }
-                        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, inputText);
-                        firstEmptyRowIndex++;
-                    } else if (responseOptionGroups.length === 0 && statisticsSelect) {
-                        let statistic = statisticsSelect ? statisticsSelect.value.toLowerCase() : '';
-                        let statisticDisplayText = statisticsSelect.options[statisticsSelect.selectedIndex].text;
-                        let statisticText = '';
+                        statisticText = inputBox ? inputBox.value : '';
+                        break;
+                    default:
+                        statisticText = statistic; // Use the provided text if no match
+                }
 
-                        // Parse the statistic option
-                        switch (statistic) {
-                            case 'count':
-                                statisticText = "XX"; // Placeholder for actual count value
-                                break;
-                            case 'mean_sd':
-                                statisticText = "XX.x ± X.x"; // Placeholder for actual mean value
-                                break;
-                            case 'percentage':
-                                statisticText = "XX.x% (m/n)"; // Placeholder for actual percentage value
-                                break;
-                            case 'input':
-                                const inputBox = parentContainer.querySelector('.input-select');
-                                statisticText = inputBox ? inputBox.value : '';
-                                break;
-                            default:
-                                statisticText = statistic; // Use the provided text if no match
-                        }
+                if (!fieldLabelAdded) {
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, fieldLabel);
+                    fieldLabelAdded = true;
+                }
+                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, statisticText);
+                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 3, statisticDisplayText);
+                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 4, fieldCode);
+                firstEmptyRowIndex++;
+            } else {
+                // Handle normal response options
+                responseOptionGroups.forEach((group) => {
+                    const responseOptionSelect = group.querySelector('.response-option-select');
+                    let responseOptionText = responseOptionSelect ? responseOptionSelect.value.match(/\d+\s*=\s*(.+)/)[1] : '';
+                    const statisticsSelect = group.querySelector('.statistics-select');
+                    let statisticDisplayText = statisticsSelect.options[statisticsSelect.selectedIndex].text;
+                    let statistic = statisticsSelect ? statisticsSelect.value.toLowerCase() : '';
+                    let statisticText = '';
 
-                        if (!fieldLabelAdded) {
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, fieldLabel);
-                            fieldLabelAdded = true;
-                        }
-                        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, statisticText);
-                        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 3, statisticDisplayText);
-                        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 4, fieldCode);
-                        firstEmptyRowIndex++;
-                    } else {
-                        // Handle normal response options
-                        responseOptionGroups.forEach((group) => {
-                            const responseOptionSelect = group.querySelector('.response-option-select');
-                            let responseOptionText = responseOptionSelect ? responseOptionSelect.value.match(/\d+\s*=\s*(.+)/)[1] : '';
-                            const statisticsSelect = group.querySelector('.statistics-select');
-                            let statisticDisplayText = statisticsSelect.options[statisticsSelect.selectedIndex].text;
-                            let statistic = statisticsSelect ? statisticsSelect.value.toLowerCase() : '';
-                            let statisticText = '';
-
-                            // Parse the statistic option
-                            switch (statistic) {
-                                case 'count':
-                                    statisticText = "XX"; // Placeholder for actual count value
-                                    break;
-                                case 'mean_sd':
-                                    statisticText = "XX.x ± X.x"; // Placeholder for actual mean value
-                                    break;
-                                case 'percentage':
-                                    statisticText = "XX.x% (m/n)"; // Placeholder for actual percentage value
-                                    break;
-                                default:
-                                    statisticText = statistic; // Use the provided text if no match
-                            }
-
-                            // Add the field label only on the first applicable row
-                            if (!fieldLabelAdded) {
-                                hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, fieldLabel);
-                                fieldLabelAdded = true;
-                            }
-
-                            // Add response option and statistic
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 1, responseOptionText);
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, statisticText);
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 3, statisticDisplayText);
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 4, fieldCode);
-                            hotTableViewer.setDataAtCell(firstEmptyRowIndex, 5, responseOptionSelect.value.match(/^\d+/)[0])
-
-                            firstEmptyRowIndex++; // Move to the next row for the next iteration
-                        });
+                    // Parse the statistic option
+                    switch (statistic) {
+                        case 'count':
+                            statisticText = "XX"; // Placeholder for actual count value
+                            break;
+                        case 'mean_sd':
+                            statisticText = "XX.x ± X.x"; // Placeholder for actual mean value
+                            break;
+                        case 'percentage':
+                            statisticText = "XX.x% (m/n)"; // Placeholder for actual percentage value
+                            break;
+                        default:
+                            statisticText = statistic; // Use the provided text if no match
                     }
+
+                    // Add the field label only on the first applicable row
+                    if (!fieldLabelAdded) {
+                        hotTableViewer.setDataAtCell(firstEmptyRowIndex, 0, fieldLabel);
+                        fieldLabelAdded = true;
+                    }
+
+                    // Add response option, statistic, and generated R columns
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 1, responseOptionText);
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 2, statisticText);
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 3, statisticDisplayText);
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 4, fieldCode);
+                    hotTableViewer.setDataAtCell(firstEmptyRowIndex, 5, responseOptionSelect.value.match(/^\d+/)[0])
+
+                    firstEmptyRowIndex++; // Move to the next row for the next iteration
                 });
+            }
+        });
 
-                //hotTableViewer.render(); // Re-render the table to display changes
-                const hideColumns = hotTableViewer.getPlugin('hiddenColumns')
-                hideColumns.hideColumn(3, 4, 5);
-                hotTableViewer.render();
-            });
+        const hideColumns = hotTableViewer.getPlugin('hiddenColumns')
+        hideColumns.hideColumn(3, 4, 5);
+        hotTableViewer.render();
+    });
 
 
-            function loadData() {
-                const excelFile = document.getElementById('excelFile').files[0];
-                const sheetName = document.getElementById('sheetName').value;
-                sessionStorage.setItem('sheetName', sheetName)
+    function loadData() {
+        const excelFile = document.getElementById('excelFile').files[0];
+        const sheetName = document.getElementById('sheetName').value;
+        sessionStorage.setItem('sheetName', sheetName)
 
-                const formData = new FormData();
-                formData.append('excel_file', excelFile);
-                formData.append('sheet_name', sheetName);
+        const formData = new FormData();
+        formData.append('excel_file', excelFile);
+        formData.append('sheet_name', sheetName);
 
-                fetch('/get_data', {
-                    method: 'POST',
-                    body: formData,
-                })
-                    .then(response => response.json())
-                    .then(response => {
-                        console.log(response);
-                        if (response.data && response.data.length > 0) {
-                            const container = document.getElementById('hot');
+        fetch('/get_data', {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {// Check if response status is not OK
+                    throw new Error(response.error);
+                }
+                return response.json();
+            })
+            .then(response => {
+                console.log(response);
+                if (response.data && response.data.length > 0) {
+                    const container = document.getElementById('hot');
 
-                            const columnOrder = response.columns; // Use the received column order
+                    const columnOrder = response.columns; // Use the received column order
 
-                            const hotColumns = columnOrder.map(col => ({
-                                data: col
-                            }));
+                    const hotColumns = columnOrder.map(col => ({
+                        data: col
+                    }));
 
-                            hotDataDictionary = new Handsontable(container, {
-                                licenseKey: 'non-commercial-and-evaluation',
-                                data: response.data,
-                                rowHeaders: true,
-                                colHeaders: columnOrder,
-                                columns: hotColumns,
-                                filters: true,
-                                dropdownMenu: true,
-                                manualColumnMove: true,
-                                contextMenu: true,
-                                colWidths: 150
-                            });
-
-                            // Added console.log to check if hotDataDictionary is initialized correctly
-                            console.log('Hot instance after creation:', hotDataDictionary);
-                            populateProcedureSelect()
-
-                        } else {
-                            console.log("No data returned or data is empty.");
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Error loading data: ", err);
+                    hotDataDictionary = new Handsontable(container, {
+                        licenseKey: 'non-commercial-and-evaluation',
+                        data: response.data,
+                        rowHeaders: true,
+                        colHeaders: columnOrder,
+                        columns: hotColumns,
+                        filters: true,
+                        dropdownMenu: true,
+                        manualColumnMove: true,
+                        contextMenu: true,
+                        colWidths: 150
                     });
-            }
 
-            function exportToExcel(hotTable) {
-                console.log('Function Called');
+                    // Validate the column headers. If invalid, delete the HoT instance and exit the function
+                    if (!validateColumns(hotDataDictionary)) {
+                        // Delete HoT instance
+                        hotDataDictionary.destroy();
+                        hotDataDictionary = null;
+                        return; // Exit the function
+                    }
 
-                // Since hotDataDictionary is declared globally, no need to re-declare it here
-                if (!hotTable) {
-                    alert('No Handsontable instance found.');
-                    return;
+                    // Added console.log to check if hotDataDictionary is initialized correctly
+                    console.log('Hot instance after creation:', hotDataDictionary);
+                    populateProcedureSelect()
+
+                } else {
+                    alert("No data returned or data is empty.");
                 }
-
-                const data = hotTable.getData();
-                alert('Data fetched: ' + JSON.stringify(data));
-
-                const headers = ['Col1', 'Col2', 'Col3', 'Aggregate_Function', 'Data_Field', 'Numerator_Value']
-
-                // Convert data for xlsx
-                const wsData = [headers, ...data];
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                const wb = XLSX.utils.book_new();
-
-                // Add worksheet to workbook
-                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-                // Create blob, generate download link and click it programmatically
-                const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'binary'});
-                const blob = new Blob([s2ab(wbout)], {type: 'application/octet-stream'});
-                const blobURL = window.URL.createObjectURL(blob);
-
-                const tempLink = document.createElement('a');
-                tempLink.href = blobURL;
-                tempLink.setAttribute('download', 'exported_data.xlsx');
-                tempLink.click();
-
-                function s2ab(s) {
-                    const buf = new ArrayBuffer(s.length);
-                    const view = new Uint8Array(buf);
-                    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-                    return buf;
-                }
-            }
-
-            var myModal = new bootstrap.Modal(document.getElementById('myModal'), {
-                keyboard: false
+            })
+            .catch(error => {
+                alert(error.message)
             });
+    }
+
+    function validateColumns(hotInstance) {
+        const columnHeaders = hotInstance.getColHeader();
+        const requiredColumns = ['PROCEDUREID', 'FORM_TAB', 'FIELD_LABEL', 'FIELD_CODE', 'FIELD_STATUS', 'RESPONSE_OPTIONS'];
+        const missingColumns = requiredColumns.filter(col => !columnHeaders.includes(col));
+
+        if (missingColumns.length > 0) {
+            alert(`Missing required columns: ${missingColumns.join(', ')}`);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+
+    function exportToExcel(hotTable) {
+        console.log('Function Called');
+
+        // Since hotDataDictionary is declared globally, no need to re-declare it here
+        if (!hotTable) {
+            alert('No Handsontable instance found.');
+            return;
+        }
+
+        const data = hotTable.getData();
+        alert('Data fetched: ' + JSON.stringify(data));
+
+        const headers = ['Col1', 'Col2', 'Col3', 'Aggregate_Function', 'Data_Field', 'Numerator_Value']
+
+        // Convert data for xlsx
+        const wsData = [headers, ...data];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+        // Create blob, generate download link and click it programmatically
+        const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'binary'});
+        const blob = new Blob([s2ab(wbout)], {type: 'application/octet-stream'});
+        const blobURL = window.URL.createObjectURL(blob);
+
+        const tempLink = document.createElement('a');
+        tempLink.href = blobURL;
+        tempLink.setAttribute('download', 'exported_data.xlsx');
+        tempLink.click();
+
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+            return buf;
+        }
+    }
+
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {
+        keyboard: false
+    });
 </script>
 </body>
 </html>
