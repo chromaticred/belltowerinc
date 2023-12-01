@@ -1005,12 +1005,6 @@
         })
             .then(response => response.json())
             .then(response => {
-                if (!response.ok) {// Check if response status is not OK
-                    throw new Error(response.error);
-                }
-                return response.json();
-            })
-            .then(response => {
                 console.log(response);
                 if (response.data && response.data.length > 0) {
                     const container = document.getElementById('hot');
@@ -1034,6 +1028,14 @@
                         colWidths: 150
                     });
 
+                    // Check if the imported data dictionary is empty
+                    if (hotDataDictionary.countRows() === 0) {
+                        alert('The table is empty.');
+                        hotDataDictionary.destroy();
+                        hotDataDictionary = null;
+                        return;
+                    }
+
                     // Validate the column headers. If invalid, delete the HoT instance and exit the function
                     if (!validateColumns(hotDataDictionary)) {
                         // Delete HoT instance
@@ -1047,7 +1049,7 @@
                     populateProcedureSelect()
 
                 } else {
-                    alert("No data returned or data is empty.");
+                    alert("Sheet '" + sheetName + "' not found in the Excel file.");
                 }
             })
             .catch(error => {
