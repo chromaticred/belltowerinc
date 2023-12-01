@@ -27,8 +27,5 @@ def get_data():
             "columns": original_order
         }
         return jsonify(response)
-    except ValueError as e:
-        error_message = f"Sheet '{sheet_name}' not found in the Excel file."
-        return jsonify({"error": error_message}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 400
