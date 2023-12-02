@@ -57,7 +57,7 @@
             </div>
         </div>
 
-        <div class="col-md-4 col-lg-3">
+        <div class="col-md-4 col-lg-5">
             <button id="openModalBtn" type="button" class="btn btn-primary" data-bs-toggle="modal"
                     data-bs-target="#myModal">View Data Dictionary
             </button>
@@ -72,9 +72,9 @@
     <div class="row">
         <!-- Left half starts -->
         <div class="col-md-6">
-            <div class="form-floating mb-3">
+            <div class="form-floating mb-3 mt-1">
                 <select class="form-select" id="procedureSelect" aria-label="Select Procedure ID:">
-                    <option selected>Select PROCEDUREID</option>
+                    <option selected>Select Procedure ID</option>
                 </select>
                 <label for="procedureSelect">Procedure ID:</label>
             </div>
@@ -88,7 +88,9 @@
                     <input type="text" aria-label="Header" id="deviceInput" class="form-control">
                     <label for="deviceInput">Device:</label>
                 </div>
-                <button id="addHeaderToTableBtn" class="btn btn-primary ms-2">
+                <button id="addHeaderToTableBtn" class="btn btn-primary ms-2" data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        data-bs-title="Add Header to Table">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
@@ -115,7 +117,9 @@
                     </select>
                     <label for="subHeaderStatisticsSelect">Select Statistic:</label>
                 </div>
-                <button id="addSubheaderToTableBtn" class="btn btn-primary ms-2">
+                <button id="addSubheaderToTableBtn" class="btn btn-primary ms-2" data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        data-bs-title="Add Subheader to Table">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
@@ -123,11 +127,12 @@
             <div class="input-group mb-3">
                 <div class="form-floating">
                     <select id="formTabSelect" class="form-select">
-                        <option selected>Select FORM_TAB</option>
+                        <option selected>Select Field Grouping</option>
                     </select>
-                    <label for="formTabSelect">Form:</label>
+                    <label for="formTabSelect">Field Grouping</label>
                 </div>
-                <button id="addToTableBtn" class="btn btn-primary ms-2">
+                <button id="addToTableBtn" class="btn btn-primary ms-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                        data-bs-title="Add Field Label(s) to Table">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
 
@@ -137,8 +142,7 @@
                 <div class="input-group mb-3">
                     <button class="btn btn-danger remove-field-label-btn me-2" type="button">-</button>
                     <select id="fieldLabelSelect" class="form-select field-label-select">
-                        <option selected>Select FIELD_LABEL</option>
-                        <!-- Options for the initial field label here -->
+                        <option selected>Select Field Label</option>
                     </select>
                     <button class="btn btn-primary add-field-label-btn ms-2" type="button">+</button>
                 </div>
@@ -150,14 +154,14 @@
         <!-- Left half ends -->
         <div class="col-md-6">
             <!-- Container for Handsontable -->
-            <div id="hotTableViewerContainer" class="handsontable-container mt-4"></div>
+            <div id="hotTableViewerContainer" class="handsontable-container mt-2"></div>
         </div>
-        <!-- Right half placeholder ends -->
+        <!-- Right half ends -->
     </div>
 </div>
 
 
-<!-- The Modal -->
+<!-- The Data Dictionary Modal -->
 <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-fullscreen modal-xl">
         <div class="modal-content modal-content-fullscreen">
@@ -169,7 +173,6 @@
                 <div id="hot"></div>
             </div>
             <div class="modal-footer">
-                {#                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>#}
                 <button type="button" class="btn btn-secondary" onclick="exportToExcel(hotDataDictionary)">Export to
                     Excel
                 </button>
@@ -187,7 +190,9 @@
 <script src="https://kit.fontawesome.com/e8883a6e4f.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@shopify/draggable/build/umd/index.min.js"></script>
 
+
 <script type="module">
+    // Import Sortable to sort the response options for the first Response Option container.
     import Sortable from 'https://cdn.jsdelivr.net/npm/@shopify/draggable/build/esm/Sortable/Sortable.mjs';
 
     const containerSelector = '.dropzone';
@@ -214,13 +219,18 @@
 </script>
 
 <script>
+    // Initialize required global variables
     let hotDataDictionary;
     let hotTableViewer;
     let globalUniqueFieldLabels = [];
     let responseOptionsMap = {};
 
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+    //Initialize Data Dictionary modal
     document.getElementById('myModal').addEventListener('shown.bs.modal', function () {
-        // Initialize or update Handsontable here
         if (!hotDataDictionary) {
             hotDataDictionary = new Handsontable(document.getElementById('hot'), {
                 // Handsontable options
@@ -230,10 +240,10 @@
         }
     });
 
+    // Initialize required event listeners, other functions, and initial states.
     document.addEventListener("DOMContentLoaded", function () {
 
-        const testContainer = document.querySelector('.response-options-container');
-        console.log('Directly Selected Response Options Container:', testContainer);
+        // Check session for a previously entered sheet name.
         const storedSheetName = sessionStorage.getItem('sheetName');
         if (storedSheetName) {
             document.getElementById('sheetName').value = storedSheetName;
@@ -241,20 +251,18 @@
 
         document.getElementById('procedureSelect').addEventListener('change', handleProcedureSelectChange);
 
-        // Attach event listener for formTabSelect
         document.getElementById('formTabSelect').addEventListener('change', handleFormTabSelectChange);
 
         document.querySelector('.add-field-label-btn').addEventListener('click', addFieldLabelSelect);
 
         const fieldLabelSelectElement = document.getElementById('fieldLabelSelect');
-        console.log("Attaching event handler to:", fieldLabelSelectElement);
         document.getElementById('fieldLabelSelect').addEventListener('change', fieldLabelSelectChangeHandler);
 
         document.querySelector('.remove-field-label-btn').style.visibility = 'hidden';
 
+        // Initialize the Table Viewer
         const hotViewerContainer = document.getElementById('hotTableViewerContainer');
         hotTableViewer = new Handsontable(hotViewerContainer, {
-            // Handsontable settings without headers
             licenseKey: 'non-commercial-and-evaluation',
             colHeaders: false,
             rowHeaders: true,
@@ -266,11 +274,11 @@
             },
             contextMenu: ['row_above', 'row_below', 'remove_row', 'undo', 'redo', 'alignment', 'mergeCells'],
             mergeCells: true
-            // ... other settings that might be necessary ...
         });
 
     });
 
+    // Function to populate the Procedure ID from the data dictionary.
     function populateProcedureSelect() {
         const mainData = hotDataDictionary.getData();
         const procedureIndex = hotDataDictionary.getColHeader().indexOf('PROCEDUREID');
@@ -289,7 +297,7 @@
         });
 
         const procedureSelect = document.getElementById('procedureSelect');
-        procedureSelect.innerHTML = '<option selected>Select PROCEDUREID</option>';
+        procedureSelect.innerHTML = '<option selected>Select Procedure ID</option>';
         procedureIDs.forEach(id => {
             const option = document.createElement('option');
             option.value = id;
@@ -298,33 +306,31 @@
         });
     }
 
+    // Function to populate the Field Grouping/Form Tab from the data dictionary upon selecting a Procedure ID.
     function handleProcedureSelectChange() {
-        const selectedProcedureID = this.value.trim(); // Ensure it's a string and trimmed
-        console.log("Selected PROCEDUREID:", selectedProcedureID); // Debugging
-
+        const selectedProcedureID = this.value.trim();
         const mainData = hotDataDictionary.getData();
         const procedureIndex = hotDataDictionary.getColHeader().indexOf('PROCEDUREID');
         const formTabIndex = hotDataDictionary.getColHeader().indexOf('FORM_TAB');
 
-        // Filter for rows with the selected PROCEDUREID
+        // Filter for rows with the selected PROCEDURE ID
         const filteredRows = mainData.filter(row => {
             let rowProcedureID = row[procedureIndex];
-            // Convert to string and trim if it's not undefined or null
             if (rowProcedureID != null) {
                 rowProcedureID = String(rowProcedureID).trim();
             }
             return rowProcedureID === selectedProcedureID;
         });
 
-        console.log("Filtered Rows:", filteredRows); // Debugging
+        //console.log("Filtered Rows:", filteredRows); // Debugging
 
         // Extract unique FORM_TAB values from filtered rows and sort them
         const relatedFormTabs = [...new Set(filteredRows.map(row => row[formTabIndex]))].sort();
-        console.log("Related FORM_TABs:", relatedFormTabs); // Debugging
+        //console.log("Related FORM_TABs:", relatedFormTabs); // Debugging
 
         // Populate formTabSelect
         const formTabSelect = document.getElementById('formTabSelect');
-        formTabSelect.innerHTML = '<option selected>Select FORM_TAB</option>';
+        formTabSelect.innerHTML = '<option selected>Select Field Grouping</option>';
         relatedFormTabs.forEach(tab => {
             const option = document.createElement('option');
             option.value = tab;
@@ -332,19 +338,16 @@
             formTabSelect.appendChild(option);
         });
 
-        // Reset the initial field label select and response options
         resetInitialFieldLabelAndOptions();
-
-        // Remove dynamically added field labels and their response options
         removeDynamicallyAddedFields();
     }
 
 
-    // Event listener for formTabSelect
+    // Function to populate Field Labels from the data dictionary upon selecting a Form Tab.
     function handleFormTabSelectChange() {
         const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
         const selectedFormTab = this.value.trim();
-        console.log("Selected FORM_TAB:", selectedFormTab);
+        //console.log("Selected FORM_TAB:", selectedFormTab);
 
         const mainData = hotDataDictionary.getData();
         const procedureIndex = hotDataDictionary.getColHeader().indexOf('PROCEDUREID');
@@ -364,15 +367,12 @@
             return rowProcedureID === selectedProcedureID && rowFormTab === selectedFormTab && rowFieldStatus === 'ACTIVE';
         });
 
-        console.log("FIELD_STATUS for Filtered Rows:");
-        filteredRows.forEach(row => {
-            console.log(row[row.length - 1]); // Assuming the last column is FIELD_STATUS
-        });
+        //Log the filtered rows for debugging
+        //filteredRows.forEach(row => {console.log(row[row.length - 1]););
 
         let uniqueFieldLabels = [...new Set(filteredRows.map(row => row[fieldLabelIndex]))].sort();
-        console.log("Related FIELD_LABELs:", uniqueFieldLabels);
+        //console.log("Related FIELD_LABELs:", uniqueFieldLabels);
 
-        // New section to create a map for FIELD_LABEL to FIELD_CODE
         let fieldLabelCodeMap = new Map();
         filteredRows.forEach(row => {
             const fieldLabel = row[fieldLabelIndex];
@@ -380,7 +380,7 @@
             fieldLabelCodeMap.set(fieldLabel, fieldCode);
         });
 
-        // Update all fieldLabelSelect elements
+
         document.querySelectorAll('.field-label-select').forEach(selectElement => {
             populateFieldLabelSelect(selectElement, uniqueFieldLabels, fieldLabelCodeMap);
         });
@@ -394,7 +394,6 @@
             }
         });
 
-        // Existing code continues...
         const selectedLabels = updateSelectedFieldLabels();
         updateFieldLabelOptions(selectedLabels);
         populateInitialResponseOptions();
@@ -402,9 +401,10 @@
         removeDynamicallyAddedFields();
     }
 
+    // Function to reset the initial Field Label and Response Options upon changing the Procedure ID or Form Tab.
     function resetInitialFieldLabelAndOptions() {
         const initialFieldLabelSelect = document.getElementById('fieldLabelSelect');
-        initialFieldLabelSelect.value = 'Select FIELD_LABEL'; // Reset to default
+        initialFieldLabelSelect.value = 'Select Field Label';
 
         const initialResponseOptionsContainer = document.getElementById('initial-field-label-group').querySelector('.response-options-container');
         if (initialResponseOptionsContainer) {
@@ -412,12 +412,14 @@
         }
     }
 
+    // Function to remove dynamically added Field Label and Response Options upon changing the Procedure ID or Form Tab.
     function removeDynamicallyAddedFields() {
         const dynamicallyAddedFieldGroups = document.querySelectorAll('.field-label-group:not(#initial-field-label-group)');
         dynamicallyAddedFieldGroups.forEach(group => group.remove());
     }
 
 
+    // Function to handle adding new Field Label selectors.
     function addFieldLabelSelect(event) {
         const currentAddButton = event.target;
         if (currentAddButton.nodeName === 'BUTTON' && currentAddButton.parentNode) {
@@ -434,7 +436,6 @@
             removeButton.className = 'btn btn-outline-danger';
             removeButton.textContent = '-';
             removeButton.addEventListener('click', removeFieldLabelSelect); // Attach the event listener
-
 
             const addButton = document.createElement('button');
             addButton.className = 'btn btn-outline-primary';
@@ -468,11 +469,11 @@
         updateFieldLabelOptions(selectedLabels);
     }
 
+    // Function to handle removing Field Labels selectors upon clicking the remove button.
     function removeFieldLabelSelect(event) {
-        // Find the closest parent .field-label-group of the clicked 'Remove' button
         const fieldLabelGroup = event.target.closest('.field-label-group');
         if (fieldLabelGroup) {
-            fieldLabelGroup.remove(); // Remove the entire group, including Field Label and Response Options
+            fieldLabelGroup.remove();
         } else {
             console.error('Field label group not found for the remove button.');
         }
@@ -483,13 +484,13 @@
     }
 
 
+    // Function to populate the Field Label selectors upon selecting a Form Tab.
     function populateFieldLabelSelect(selectElement, uniqueFieldLabels, fieldLabelCodeMap) {
-        selectElement.innerHTML = '<option selected>Select FIELD_LABEL</option>';
+        selectElement.innerHTML = '<option selected>Select Field Label</option>';
         uniqueFieldLabels.forEach(label => {
             const option = document.createElement('option');
             option.value = label;
             option.textContent = label;
-            // Set FIELD_CODE as a data attribute
             if (fieldLabelCodeMap.has(label)) {
                 option.setAttribute('data-field-code', fieldLabelCodeMap.get(label));
             }
@@ -497,46 +498,42 @@
         });
     }
 
+    // Function to track the selected Field Labels.
     function updateSelectedFieldLabels() {
         const selectedLabels = new Set();
         document.querySelectorAll('.field-label-select').forEach(select => {
-            if (select.value !== 'Select FIELD_LABEL') {
+            if (select.value !== 'Select Field Label') {
                 selectedLabels.add(select.value);
             }
         });
         return selectedLabels;
     }
 
+    // Function to update the Field Label options based on selected Field Labels.
     function updateFieldLabelOptions(selectedLabels) {
         document.querySelectorAll('.field-label-select').forEach(select => {
             const currentValue = select.value;
             const options = select.querySelectorAll('option');
 
             options.forEach(option => {
-                if (option.value !== 'Select FIELD_LABEL' && option.value !== currentValue) {
+                if (option.value !== 'Select Field Label' && option.value !== currentValue) {
                     option.style.display = selectedLabels.has(option.value) ? 'none' : ''; // Hide if selected, show otherwise
                 }
             });
         });
     }
 
-    function attachFieldLabelSelectListeners() {
-        document.querySelectorAll('.field-label-select').forEach(select => {
-            select.removeEventListener('change', fieldLabelSelectChangeHandler); // Remove existing listener to avoid duplicates
-            select.addEventListener('change', fieldLabelSelectChangeHandler);
-        });
-    }
-
     function fieldLabelSelectChangeHandler() {
-        console.log("Field label select changed. Current fieldLabelSelect:", this);
+        // console.log("Field label select changed. Current fieldLabelSelect:", this); // Debugging
         const selectedProcedureID = document.getElementById('procedureSelect').value.trim();
         const selectedFormTab = document.getElementById('formTabSelect').value.trim();
         const selectedLabel = this.value;
         const compositeKey = `${selectedProcedureID}_${selectedFormTab}_${selectedLabel}`;
         const responseOptions = responseOptionsMap[compositeKey];
 
-        console.log("Selected label:", selectedLabel);
-        console.log("Response options for the selected label:", responseOptions);
+        // Log field labels and response options for debugging.
+        //console.log("Selected label:", selectedLabel);
+        //console.log("Response options for the selected label:", responseOptions);
 
         // Find the closest parent .field-label-group for the selected Field Label
         const parentContainer = this.closest('.field-label-group');
@@ -561,6 +558,13 @@
             responseOptionsContainer.appendChild(statisticsSelector);
             console.log("No response options for:", selectedLabel);
         }
+    }
+
+    function attachFieldLabelSelectListeners() {
+        document.querySelectorAll('.field-label-select').forEach(select => {
+            select.removeEventListener('change', fieldLabelSelectChangeHandler);
+            select.addEventListener('change', fieldLabelSelectChangeHandler);
+        });
     }
 
     function addResponseOptionSelector(container, option) {
@@ -602,11 +606,11 @@
             return;
         }
 
-        console.log('Field Label Select Element:', fieldLabelSelect);
+        // console.log('Field Label Select Element:', fieldLabelSelect); //Debugging
 
         // Find the closest parent .field-label-group for the selected Field Label
         const parentContainer = fieldLabelSelect.closest('.field-label-group');
-        console.log('Parent Container:', parentContainer);
+        // console.log('Parent Container:', parentContainer); //Debugging
 
         if (!parentContainer) {
             console.error('Parent .field-label-group not found.');
@@ -615,7 +619,7 @@
 
         // Find the .response-options-container within the parentContainer
         const responseOptionsContainer = parentContainer.querySelector('.response-options-container');
-        console.log('Response Options Container:', responseOptionsContainer);
+        // console.log('Response Options Container:', responseOptionsContainer); //Debugging
         if (!responseOptionsContainer) {
             console.error('Response options container not found within parent container.', parentContainer);
             return;
@@ -642,7 +646,7 @@
                     responseOptionsContainer.appendChild(responseOptionGroup);
                 });
         }
-        console.log('Final Contents of Response Options Container:', responseOptionsContainer.innerHTML);
+        //console.log('Final Contents of Response Options Container:', responseOptionsContainer.innerHTML); //Debugging
 
 
         // Function to create a response option group
@@ -773,7 +777,7 @@
         if (responseOptions) {
             const initialResponseOptionsContainer = document.getElementById('initial-field-label-group').querySelector('.response-options-container');
             if (initialResponseOptionsContainer) {
-                initialResponseOptionsContainer.innerHTML = ''; // Clear existing options
+                initialResponseOptionsContainer.innerHTML = '';
                 responseOptions.forEach(option => {
                     const optionElement = document.createElement('div');
                     optionElement.textContent = option.trim();
@@ -782,7 +786,7 @@
             } else {
                 console.error('Initial response options container not found.');
             }
-        } else {
+        } else if (initialFieldLabelSelect.value !== 'Select Field Label') {
             console.error('No response options found for initial field label.');
         }
     }
@@ -1005,7 +1009,7 @@
         })
             .then(response => response.json())
             .then(response => {
-                console.log(response);
+                //console.log(response); //Debugging
                 if (response.data && response.data.length > 0) {
                     const container = document.getElementById('hot');
 
@@ -1044,8 +1048,8 @@
                         return; // Exit the function
                     }
 
-                    // Added console.log to check if hotDataDictionary is initialized correctly
-                    console.log('Hot instance after creation:', hotDataDictionary);
+                    //Log to check if hotDataDictionary is initialized correctly
+                    //console.log('Hot instance after creation:', hotDataDictionary); // Debugging
                     populateProcedureSelect()
 
                 } else {
@@ -1072,16 +1076,17 @@
 
 
     function exportToExcel(hotTable) {
-        console.log('Function Called');
-
-        // Since hotDataDictionary is declared globally, no need to re-declare it here
         if (!hotTable) {
             alert('No Handsontable instance found.');
             return;
         }
 
         const data = hotTable.getData();
-        alert('Data fetched: ' + JSON.stringify(data));
+        if (data.length === 0 || data.every(row => row.every(cell => cell === null || cell === ''))) {
+            alert('No data found in the table.');
+            return;
+        }
+        // alert('Data fetched: ' + JSON.stringify(data)); //Debugging
 
         const headers = ['Col1', 'Col2', 'Col3', 'Aggregate_Function', 'Data_Field', 'Numerator_Value']
 
@@ -1098,9 +1103,13 @@
         const blob = new Blob([s2ab(wbout)], {type: 'application/octet-stream'});
         const blobURL = window.URL.createObjectURL(blob);
 
+        const date = new Date().toJSON().slice(0,10).replace(/-/g,'_');
+        const dateString = "exported_data_" + date + ".xlsx";
+
+
         const tempLink = document.createElement('a');
         tempLink.href = blobURL;
-        tempLink.setAttribute('download', 'exported_data.xlsx');
+        tempLink.setAttribute('download', dateString);
         tempLink.click();
 
         function s2ab(s) {
